@@ -4,10 +4,12 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
 
+// token时效性
 const getJWTPayload = (token) => {
   return jwt.verify(token.split(" ")[1], config.JWT_SECRET);
 };
 
+// 验证图形验证码时效性
 const checkCode = async (key, value) => {
   const redisData = await getValue(key);
   if (

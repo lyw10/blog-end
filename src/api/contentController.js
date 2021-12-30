@@ -1,11 +1,12 @@
 import Post from "../model/Post";
-import Link from "../model/Links";
+import User from "../model/User";
 import qs from "qs";
 import Links from "../model/Links";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import moment from "dayjs";
 import config from "../config";
+import { checkCode, getJWTPayload } from "../common/utils";
 // 方法1:
 // import { dirExists } from "../common/utils";
 // 方法2:
@@ -115,6 +116,90 @@ class ContentController {
       msg: "图片上传成功！",
       data: filePath,
     };
+  }
+
+  // 添加新贴
+  async addPost(ctx) {
+    const { body } = ctx.request;
+    const code = body.code;
+    const sid = body.sid;
+    // 验证图片验证码的时效性、正确性
+    const result = await checkCode(sid, code);
+    if (result) {
+      const obj = await getJWTPayload(ctx.header.authorization);
+      // 判断用户的积分数是否 > fav，否则，提示用户积分不足发贴
+      // 用户积分足够的时候，新建Post，减除用户对应的积分
+      const user = await User.findByID({ _id: obj._id });
+      if (user.fav < body.fav) {
+        ctx.body = {
+          code: 501,
+          msg: "积分不足",
+        };
+        return;
+      } else {
+        await User.updateOne({ _id: obj._id }, { $inc: { fav: -body.fav } });
+      }
+      const newPost = new Post(body);
+      newPost.uid = obj._id;
+      const result = await newPost.save();
+      ctx.body = {
+        code: 200,
+        msg: "成功的保存的文章",
+        data: result,
+      };
+    } else {
+      // 图片验证码验证失败
+      ctx.body = {
+        code: 500,
+        msg: "图片验证码验证失败",
+      };
+    }
+  }
+
+  // 获取文章详情
+  async getPostDetail(ctx) {
+    const params = ctx.query;
+    if (!params.tid) {
+      ctx.body = {
+        code: 500,
+        msg: "文章id为空",
+      };
+      return;
+    }
+    const post = await Post.findByTid(params.tid);
+    if (!post) {
+      ctx.body = {
+        code: 200,
+        data: {},
+        msg: "查询文章详情成功",
+      };
+      return;
+    }
+    // let isFav = 0;
+    // 判断用户是否传递Authorization的数据，即是否登录
+    // if (ctx.header.authorization) {
+    //   const obj = await getJWTPayload(ctx.header.authorization)
+    //   // const userCollect = await
+    // }
+    // const newPost = post.toJSON()
+    // newPost.isFav = 0;
+    // 更新文章阅读计数
+    const result = await Post.updateOne(
+      { _id: params.tid },
+      { $inc: { reads: 1 } }
+    );
+    if (post._id && result.modifiedCount === 1) {
+      ctx.body = {
+        code: 200,
+        data: post,
+        msg: "查询文章详情成功",
+      };
+    } else {
+      ctx.body = {
+        code: 500,
+        msg: "获取文章详情失败",
+      };
+    }
   }
 }
 

@@ -36,12 +36,12 @@ async function send(sendInfo) {
     to: sendInfo.email, // list of receivers
     subject:
       sendInfo.user !== "" && sendInfo.type !== "email"
-        ? `你好，${sendInfo.user}！《来一碗》注册码`
+        ? `你好，${sendInfo.user}！《来一碗》重置密码`
         : "《来一碗》确认修改邮件链接", // Subject line
     text: `您在《来一碗》中注册，您的邀请码是${sendInfo.code},邀请码的过期时间: ${sendInfo.expire}`, // plain text body
     html: `
         <div style="border: 1px solid #dcdcdc;color: #676767;width: 600px; margin: 0 auto; padding-bottom: 50px;position: relative;">
-        <div style="height: 60px; background: #393d49; line-height: 60px; color: #58a36f; font-size: 18px;padding-left: 10px;">Imooc社区——欢迎来到官方社区</div>
+        <div style="height: 60px; background: #393d49; line-height: 60px; color: #58a36f; font-size: 18px;padding-left: 10px;">来一碗社区——欢迎来到官方社区</div>
         <div style="padding: 25px">
           <div>您好，${sendInfo.user}，重置链接有效时间30分钟，请在${
       sendInfo.expire

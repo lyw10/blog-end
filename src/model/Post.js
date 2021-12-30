@@ -10,7 +10,7 @@ const PostSchema = new Schema({
   catalog: { type: String },
   isEnd: { type: String, default: "0" },
   isTop: { type: String, default: "0" },
-  reads: { type: String, default: 0 },
+  reads: { type: Number, default: 0 },
   answer: { type: Number, default: 0 },
   status: { type: String, default: "0" },
   topNum: { type: String },
@@ -66,7 +66,19 @@ PostSchema.statics = {
       }
     )
       .sort({ answer: -1 })
-      .limit(15);
+      .limit(10);
+  },
+  findByTid: function (id) {
+    return this.findOne({ _id: id }).populate({
+      path: "uid",
+      select: "name pic isVip _id",
+    });
+  },
+  getListByUid: function (id, page, limit) {
+    return this.find({ uid: id })
+      .skip(page * limit)
+      .limit(limit)
+      .sort({ created: -1 });
   },
 };
 
